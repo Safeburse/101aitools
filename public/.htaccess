@@ -1,0 +1,22 @@
+# Apache config for the Vite/React SPA (copied to site root on `npm run build`).
+# Requires: AllowOverride FileInfo (or All), mod_rewrite enabled.
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  # If the app is deployed in a subfolder (e.g. /app/), set RewriteBase to match:
+  # RewriteBase /app/
+
+  # --- Force HTTPS (safe behind CDNs / load balancers) ---
+  # Redirect only when the connection is not TLS and the proxy did not mark the request as HTTPS.
+  # If you see a redirect loop on your host, comment out this block and enable SSL in your host panel only.
+  RewriteCond %{HTTPS} !=on
+  RewriteCond %{HTTP:X-Forwarded-Proto} !https [NC]
+  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+  # --- Single-page app: send non-file routes to index.html ---
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule . /index.html [L]
+</IfModule>
+
+DirectoryIndex index.html
