@@ -3,6 +3,7 @@ import {
   LineChart, Briefcase, Palette, GraduationCap, Search, Music2,
   type LucideIcon,
 } from "lucide-react";
+import { buildSlugMap } from "@/lib/toolSlug";
 import toolsDataRaw from "./tools-data.json";
 
 export type Pricing = "Free" | "Freemium" | "Paid";
@@ -32,6 +33,8 @@ export interface Tool {
   /** Derived for existing free / paid filter UI. */
   pricing: Pricing;
   url: string;
+  /** Canonical path segment for /tool/:slug */
+  slug: string;
 }
 
 type CsvRow = {
@@ -149,10 +152,14 @@ const csvPricingToApp = (raw: string): { pricing: Pricing; pricingMode: PricingM
 
 const toolsData = toolsDataRaw as CsvRow[];
 
+const toolSlugMap = buildSlugMap(toolsData.map((r) => ({ id: r.id, name: r.name })));
+
 export const tools: Tool[] = toolsData.map((row) => {
   const link = normalizeToolUrl(row.link);
   const { pricing, pricingMode } = csvPricingToApp(row.pricingMode);
   const categoryId = csvCategoryToCategoryId[row._category_] ?? "productivity";
+  const slug = toolSlugMap.get(row.id);
+  if (!slug) throw new Error(`Missing slug for tool id ${row.id}`);
   return {
     id: row.id,
     name: row.name,
@@ -171,6 +178,7 @@ export const tools: Tool[] = toolsData.map((row) => {
     categoryId,
     pricing,
     url: link,
+    slug,
   };
 });
 
@@ -178,4 +186,10 @@ export const TOTAL_TOOLS = tools.length;
 
 export function getToolById(id: number): Tool | undefined {
   return tools.find((t) => t.id === id);
+}
+
+export function getToolBySlug(param: string): Tool | undefined {
+  const key = decodeURIComponent(param).trim().toLowerCase();
+  if (!key) return undefined;
+  return tools.find((t) => t.slug === key);
 }

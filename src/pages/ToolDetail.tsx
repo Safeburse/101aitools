@@ -1,5 +1,5 @@
 import { useMemo, type ReactNode } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, Navigate, useParams } from "react-router-dom";
 import { ArrowLeft, ExternalLink, Globe, Hash, Layers, Tag, Youtube } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
@@ -17,7 +17,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { categories, getToolById, normalizeToolUrl, type Tool } from "@/data/tools";
+import { categories, getToolById, getToolBySlug, normalizeToolUrl, type Tool } from "@/data/tools";
 import { getYoutubeEmbedSrc } from "@/lib/youtube";
 import { cn } from "@/lib/utils";
 import NotFound from "./NotFound";
@@ -264,13 +264,24 @@ const ToolDetailContent = ({ tool, canonicalUrl }: { tool: Tool; canonicalUrl: s
 };
 
 const ToolDetail = () => {
-  const { id: idParam } = useParams();
-  const id = Number(idParam);
-  const tool = Number.isInteger(id) && id > 0 ? getToolById(id) : undefined;
+  const { slug: slugParam } = useParams();
+  const raw = slugParam ? slugParam.trim() : "";
+
+  if (/^\d+$/.test(raw)) {
+    const id = Number(raw);
+    if (Number.isInteger(id) && id > 0) {
+      const byId = getToolById(id);
+      if (byId) {
+        return <Navigate to={`/tool/${encodeURIComponent(byId.slug)}`} replace />;
+      }
+    }
+  }
+
+  const tool = raw ? getToolBySlug(raw) : undefined;
 
   if (!tool) return <NotFound />;
 
-  const canonicalUrl = `${window.location.origin}/tool/${tool.id}`;
+  const canonicalUrl = `${window.location.origin}/tool/${encodeURIComponent(tool.slug)}`;
 
   return <ToolDetailContent tool={tool} canonicalUrl={canonicalUrl} />;
 };
