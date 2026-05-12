@@ -3,13 +3,25 @@ import {
   LineChart, Briefcase, Palette, GraduationCap, Search, Music2,
   type LucideIcon,
 } from "lucide-react";
-import { buildSlugMap } from "@/lib/toolSlug";
-import toolsDataRaw from "./tools-data.json";
 
 export type Pricing = "Free" | "Freemium" | "Paid";
 
 /** Values from CSV `pricingMode` column. */
 export type PricingMode = "Free Trial" | "Paid Service";
+
+export type CategoryId =
+  | "writing"
+  | "image"
+  | "video"
+  | "code"
+  | "chatbot"
+  | "audio"
+  | "marketing"
+  | "productivity"
+  | "design"
+  | "education"
+  | "research"
+  | "music";
 
 export interface Tool {
   id: number;
@@ -37,10 +49,11 @@ export interface Tool {
   slug: string;
 }
 
-type CsvRow = {
+/** Shape returned by Prisma for Tool (matches schema field names). */
+export type ToolDbRow = {
   id: number;
   name: string;
-  _category_: string;
+  csvCategory: string;
   category: string;
   secondaryc: string;
   link: string;
@@ -48,25 +61,12 @@ type CsvRow = {
   image: string;
   youtubeId: string;
   description: string;
-  pricingMode: string;
+  pricingModeRaw: string;
   features: string;
   usecases: string;
   sponsored: string;
+  slug: string;
 };
-
-export type CategoryId =
-  | "writing"
-  | "image"
-  | "video"
-  | "code"
-  | "chatbot"
-  | "audio"
-  | "marketing"
-  | "productivity"
-  | "design"
-  | "education"
-  | "research"
-  | "music";
 
 export interface Category {
   id: CategoryId;
@@ -92,7 +92,7 @@ export const categories: Category[] = [
 ];
 
 /** Maps CSV `_category_` to app `CategoryId` for filtering. */
-const csvCategoryToCategoryId: Record<string, CategoryId> = {
+export const csvCategoryToCategoryId: Record<string, CategoryId> = {
   "3D": "design",
   Art: "image",
   "Audio Editing": "audio",
@@ -150,20 +150,14 @@ const csvPricingToApp = (raw: string): { pricing: Pricing; pricingMode: PricingM
   return { pricing: "Freemium", pricingMode: "Free Trial" };
 };
 
-const toolsData = toolsDataRaw as CsvRow[];
-
-const toolSlugMap = buildSlugMap(toolsData.map((r) => ({ id: r.id, name: r.name })));
-
-export const tools: Tool[] = toolsData.map((row) => {
+export function toolDbRowToTool(row: ToolDbRow): Tool {
   const link = normalizeToolUrl(row.link);
-  const { pricing, pricingMode } = csvPricingToApp(row.pricingMode);
-  const categoryId = csvCategoryToCategoryId[row._category_] ?? "productivity";
-  const slug = toolSlugMap.get(row.id);
-  if (!slug) throw new Error(`Missing slug for tool id ${row.id}`);
+  const { pricing, pricingMode } = csvPricingToApp(row.pricingModeRaw);
+  const categoryId = csvCategoryToCategoryId[row.csvCategory] ?? "productivity";
   return {
     id: row.id,
     name: row.name,
-    _category_: row._category_,
+    _category_: row.csvCategory,
     category: row.category,
     secondaryc: row.secondaryc,
     link,
@@ -178,18 +172,6 @@ export const tools: Tool[] = toolsData.map((row) => {
     categoryId,
     pricing,
     url: link,
-    slug,
+    slug: row.slug,
   };
-});
-
-export const TOTAL_TOOLS = tools.length;
-
-export function getToolById(id: number): Tool | undefined {
-  return tools.find((t) => t.id === id);
-}
-
-export function getToolBySlug(param: string): Tool | undefined {
-  const key = decodeURIComponent(param).trim().toLowerCase();
-  if (!key) return undefined;
-  return tools.find((t) => t.slug === key);
 }

@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { categories, type Tool } from "@/data/tools";
 import { PricingBadge } from "./PricingBadge";
@@ -17,7 +17,7 @@ export const ToolCard = ({ tool }: { tool: Tool }) => {
 
   return (
     <Link
-      to={`/tool/${encodeURIComponent(tool.slug)}`}
+      href={`/tool/${encodeURIComponent(tool.slug)}`}
       className="group relative flex flex-col gap-4 overflow-hidden rounded-2xl border border-border bg-card p-5 shadow-sm transition-bounce hover:-translate-y-1 hover:border-primary/40 hover:shadow-glow"
     >
       <div className="absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent opacity-0 transition-smooth group-hover:opacity-100" />

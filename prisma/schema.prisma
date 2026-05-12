@@ -1,0 +1,30 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+/// Canonical tool row (migrated from legacy JSON / CSV).
+model Tool {
+  id             Int    @id
+  name           String @db.VarChar(512)
+  csvCategory    String @map("csv_category") @db.VarChar(255)
+  category       String @db.Text
+  secondaryc     String @db.Text
+  link           String @db.Text
+  externalLink   String @map("external_link") @db.Text
+  image          String @db.LongText
+  youtubeId      String @map("youtube_id") @db.Text
+  description    String @db.LongText
+  /// Raw CSV value: "Free Trial" | "Paid Service"
+  pricingModeRaw String @map("pricing_mode") @db.VarChar(64)
+  features       String @db.LongText
+  usecases       String @db.Text
+  sponsored      String @db.Text
+  slug           String @unique @db.VarChar(512)
+
+  @@map("tools")
+}

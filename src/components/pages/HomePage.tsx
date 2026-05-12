@@ -1,6 +1,8 @@
+"use client";
+
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useLocation, useSearchParams } from "react-router-dom";
-import { Search, Sparkles, LayoutGrid, ArrowRight } from "lucide-react";
+import { usePathname, useSearchParams } from "next/navigation";
+import { Search, Sparkles, LayoutGrid } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -16,7 +18,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { cn } from "@/lib/utils";
-import { categories, tools, type CategoryId, type Pricing } from "@/data/tools";
+import { categories, type Tool, type CategoryId, type Pricing } from "@/data/tools";
 
 type Filter = "all" | "free" | "paid";
 
@@ -24,7 +26,7 @@ const DIRECTORY_FILTERS_ID = "directory-filters";
 const DIRECTORY_GRID_ID = "directory-grid";
 const PAGE_SIZE = 50;
 const SUBMIT_TOOL_MAILTO = `mailto:support@101aitools.com?subject=${encodeURIComponent("Name of your AI tools")}`;
-const PARTNER_WITH_US_MAILTO = `mailto:support@101aitools.com?subject=${encodeURIComponent("Partner with us")}`;  
+const PARTNER_WITH_US_MAILTO = `mailto:support@101aitools.com?subject=${encodeURIComponent("Partner with us")}`;
 
 const filterFromSearchParams = (params: URLSearchParams): Filter => {
   const p = params.get("pricing");
@@ -33,9 +35,10 @@ const filterFromSearchParams = (params: URLSearchParams): Filter => {
   return "all";
 };
 
-const Index = () => {
-  const [searchParams] = useSearchParams();
-  const location = useLocation();
+export function HomePage({ tools }: { tools: Tool[] }) {
+  const rawParams = useSearchParams();
+  const searchParams = rawParams ?? new URLSearchParams();
+  const pathname = usePathname();
   const pricingSectionRef = useRef<HTMLElement>(null);
 
   const [query, setQuery] = useState("");
@@ -49,10 +52,11 @@ const Index = () => {
 
   useEffect(() => {
     const pricing = searchParams.get("pricing");
+    const hash = typeof window !== "undefined" ? window.location.hash : "";
     const shouldScroll =
       pricing === "free" ||
       pricing === "paid" ||
-      location.hash === `#${DIRECTORY_FILTERS_ID}`;
+      hash === `#${DIRECTORY_FILTERS_ID}`;
     if (!shouldScroll) return;
 
     const run = () =>
@@ -62,7 +66,7 @@ const Index = () => {
       window.requestAnimationFrame(run);
     });
     return () => window.cancelAnimationFrame(id);
-  }, [searchParams, location.hash, location.pathname]);
+  }, [searchParams, pathname]);
 
   useEffect(() => {
     setPage(1);
@@ -81,7 +85,7 @@ const Index = () => {
         t.category.toLowerCase().includes(q)
       );
     });
-  }, [query, activeCategory, filter]);
+  }, [query, activeCategory, filter, tools]);
 
   const totalPages = useMemo(() => {
     if (filtered.length === 0) return 0;
@@ -111,13 +115,13 @@ const Index = () => {
     const map = new Map<CategoryId, number>();
     for (const t of tools) map.set(t.categoryId, (map.get(t.categoryId) ?? 0) + 1);
     return map;
-  }, []);
+  }, [tools]);
 
   const pricingCounts = useMemo(() => {
     const c = { Free: 0, Freemium: 0, Paid: 0 } as Record<Pricing, number>;
     for (const t of tools) c[t.pricing]++;
     return c;
-  }, []);
+  }, [tools]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -135,12 +139,11 @@ const Index = () => {
               The curated directory of {tools.length} AI tools
             </span>
             <h1 className="mt-6 text-balance text-4xl font-bold tracking-tight md:text-6xl animate-fade-up [animation-delay:80ms]">
-              Discover the best{" "}
-              <span className="text-gradient">AI tools</span>{" "}
-              for every workflow
+              Discover the best <span className="text-gradient">AI tools</span> for every workflow
             </h1>
             <p className="mx-auto mt-5 max-w-2xl text-pretty text-lg text-muted-foreground animate-fade-up [animation-delay:160ms]">
-              Browse 101 hand-picked AI tools by category, compare free and paid options, and find the right fit for your team — all in one professional directory.
+              Browse 101 hand-picked AI tools by category, compare free and paid options, and find the right fit for
+              your team — all in one professional directory.
             </p>
 
             {/* Search */}
@@ -159,6 +162,7 @@ const Index = () => {
                 {["ChatGPT", "Midjourney", "Runway", "Cursor", "Notion AI"].map((t) => (
                   <button
                     key={t}
+                    type="button"
                     onClick={() => setQuery(t)}
                     className="rounded-full border border-border bg-card px-2.5 py-1 transition-smooth hover:border-primary/40 hover:text-foreground"
                   >
@@ -167,27 +171,12 @@ const Index = () => {
                 ))}
               </div>
             </div>
-
-            {/* Stats */}
-            {/* <div className="mx-auto mt-10 grid max-w-2xl grid-cols-3 gap-3 animate-fade-up [animation-delay:320ms]">
-              {[
-                { label: "AI Tools", value: tools.length },
-                { label: "Categories", value: categories.length },
-                { label: "Free options", value: pricingCounts.Free + pricingCounts.Freemium },
-              ].map((s) => (
-                <div key={s.label} className="rounded-2xl border border-border bg-card/60 px-4 py-4 backdrop-blur">
-                  <p className="text-2xl font-bold tracking-tight text-gradient">{s.value}</p>
-                  <p className="mt-0.5 text-xs text-muted-foreground">{s.label}</p>
-                </div>
-              ))}
-            </div> */}
           </div>
         </div>
       </section>
 
       {/* Directory */}
       <section id="categories" className="container pb-16">
-        {/* Pricing tabs — scroll target for header “Free / Paid Tools” */}
         <section
           ref={pricingSectionRef}
           id={DIRECTORY_FILTERS_ID}
@@ -195,13 +184,16 @@ const Index = () => {
           aria-label="Pricing filters"
         >
           <div className="flex w-full gap-1 md:w-auto" role="tablist">
-            {([
-              { id: "all", label: "All", count: tools.length },
-              { id: "free", label: "Free & Freemium", count: pricingCounts.Free + pricingCounts.Freemium },
-              { id: "paid", label: "Paid", count: pricingCounts.Paid + pricingCounts.Freemium },
-            ] as { id: Filter; label: string; count: number }[]).map((t) => (
+            {(
+              [
+                { id: "all", label: "All", count: tools.length },
+                { id: "free", label: "Free & Freemium", count: pricingCounts.Free + pricingCounts.Freemium },
+                { id: "paid", label: "Paid", count: pricingCounts.Paid + pricingCounts.Freemium },
+              ] as { id: Filter; label: string; count: number }[]
+            ).map((t) => (
               <button
                 key={t.id}
+                type="button"
                 onClick={() => setFilter(t.id)}
                 className={`flex-1 md:flex-none rounded-xl px-4 py-2 text-sm font-semibold transition-smooth ${
                   filter === t.id
@@ -215,8 +207,8 @@ const Index = () => {
             ))}
           </div>
           <p className="px-3 text-center text-xs text-muted-foreground md:text-left">
-            <span className="font-semibold text-foreground">{filtered.length}</span> match{filtered.length === 1 ? "" : "es"}{" "}
-            · {tools.length} total
+            <span className="font-semibold text-foreground">{filtered.length}</span> match
+            {filtered.length === 1 ? "" : "es"} · {tools.length} total
             {filtered.length > 0 && totalPages > 1 ? (
               <>
                 {" "}
@@ -226,7 +218,6 @@ const Index = () => {
           </p>
         </section>
 
-        {/* Category pills */}
         <div className="mt-6 flex flex-wrap gap-2">
           <CategoryPill
             category={{ id: "all", name: "All categories", icon: LayoutGrid, accent: "" }}
@@ -245,7 +236,6 @@ const Index = () => {
           ))}
         </div>
 
-        {/* Grid */}
         {filtered.length === 0 ? (
           <div className="mt-12 rounded-2xl border border-dashed border-border p-12 text-center">
             <p className="text-lg font-semibold">No tools match your filters</p>
@@ -267,10 +257,9 @@ const Index = () => {
           <>
             <p className="mt-6 text-sm text-muted-foreground">
               Displaying{" "}
-              <span className="font-medium text-foreground">
-                {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)}
-              </span>{" "}
-              of <span className="font-medium text-foreground">{filtered.length}</span> results
+              <span className="font-medium text-foreground">{(page - 1) * PAGE_SIZE + 1}–</span>
+              <span className="font-medium text-foreground">{Math.min(page * PAGE_SIZE, filtered.length)}</span> of{" "}
+              <span className="font-medium text-foreground">{filtered.length}</span> results
             </p>
             <div
               id={DIRECTORY_GRID_ID}
@@ -333,7 +322,6 @@ const Index = () => {
         )}
       </section>
 
-      {/* CTA */}
       <section id="about" className="container pb-16">
         <div className="relative overflow-hidden rounded-3xl border border-border bg-gradient-primary p-10 text-primary-foreground shadow-glow md:p-14">
           <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-white/20 blur-3xl" />
@@ -341,7 +329,8 @@ const Index = () => {
           <div className="relative max-w-2xl">
             <h2 className="text-3xl font-bold tracking-tight md:text-4xl">Built something with AI? Get listed.</h2>
             <p className="mt-3 text-base text-primary-foreground/85">
-              Submit your AI tool and reach thousands of professionals, founders and teams looking for the next product to add to their stack.
+              Submit your AI tool and reach thousands of professionals, founders and teams looking for the next product to
+              add to their stack.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
               <Button variant="glow" size="lg" className="text-foreground" asChild>
@@ -358,6 +347,4 @@ const Index = () => {
       <SiteFooter />
     </div>
   );
-};
-
-export default Index;
+}

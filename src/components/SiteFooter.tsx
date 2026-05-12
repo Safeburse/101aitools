@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import Link from "next/link";
 import { Sparkles } from "lucide-react";
 
 export const SiteFooter = () => (
@@ -17,14 +17,13 @@ export const SiteFooter = () => (
           </div>
         </div>
         <div className="grid grid-cols-2 gap-x-10 gap-y-3 text-sm sm:grid-cols-3 lg:grid-cols-4">
-          
-          <Link className="text-muted-foreground hover:text-foreground" to="/about">
+          <Link className="text-muted-foreground hover:text-foreground" href="/about">
             About
           </Link>
-          <Link className="text-muted-foreground hover:text-foreground" to="/terms">
+          <Link className="text-muted-foreground hover:text-foreground" href="/terms">
             Terms
           </Link>
-          <Link className="text-muted-foreground hover:text-foreground" to="/privacy">
+          <Link className="text-muted-foreground hover:text-foreground" href="/privacy">
             Privacy
           </Link>
         </div>

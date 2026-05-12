@@ -1,10 +1,7 @@
-import { useLayoutEffect, type ReactNode } from "react";
-import { Link } from "react-router-dom";
+import type { ReactNode } from "react";
+import Link from "next/link";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
-
-const DEFAULT_DOCUMENT_TITLE =
-  "101 AI Tools — The Professional Directory of the Best AI Tools";
 
 export function StaticPageLayout({
   title,
@@ -15,23 +12,13 @@ export function StaticPageLayout({
   subtitle?: string;
   children: ReactNode;
 }) {
-  useLayoutEffect(() => {
-    document.title = `${title} | 101 AI Tools`;
-    return () => {
-      document.title = DEFAULT_DOCUMENT_TITLE;
-    };
-  }, [title]);
-
   return (
     <div className="min-h-screen bg-background">
       <SiteHeader />
       <div className="relative overflow-hidden border-b border-border/60">
         <div className="absolute inset-0 -z-10 bg-gradient-mesh opacity-60" />
         <div className="container max-w-3xl py-10 md:py-14">
-          <Link
-            to="/"
-            className="text-sm font-medium text-muted-foreground transition-smooth hover:text-foreground"
-          >
+          <Link href="/" className="text-sm font-medium text-muted-foreground transition-smooth hover:text-foreground">
             ← Back to home
           </Link>
           <h1 className="mt-6 text-balance text-3xl font-bold tracking-tight md:text-4xl">{title}</h1>

@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import Link from "next/link";
 import { Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -8,38 +8,35 @@ export const SiteHeader = () => {
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/80 backdrop-blur-xl">
       <div className="container flex h-16 items-center justify-between">
-        <a href="/" className="flex items-center gap-2 font-bold">
+        <Link href="/" className="flex items-center gap-2 font-bold">
           <span className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-primary shadow-glow">
             <Sparkles className="h-5 w-5 text-primary-foreground" />
           </span>
           <span className="text-lg tracking-tight">
             101<span className="text-gradient">AI</span>Tools
           </span>
-        </a>
+        </Link>
 
         <nav className="hidden items-center gap-8 md:flex">
           <Link
-            to="/#categories"
+            href="/#categories"
             className="text-sm font-medium text-muted-foreground transition-smooth hover:text-foreground"
           >
             Categories
           </Link>
           <Link
-            to="/?pricing=free#directory-filters"
+            href="/?pricing=free#directory-filters"
             className="text-sm font-medium text-muted-foreground transition-smooth hover:text-foreground"
           >
             Free Tools
           </Link>
           <Link
-            to="/?pricing=paid#directory-filters"
+            href="/?pricing=paid#directory-filters"
             className="text-sm font-medium text-muted-foreground transition-smooth hover:text-foreground"
           >
             Paid Tools
           </Link>
-          <Link
-            to="/about"
-            className="text-sm font-medium text-muted-foreground transition-smooth hover:text-foreground"
-          >
+          <Link href="/about" className="text-sm font-medium text-muted-foreground transition-smooth hover:text-foreground">
             About
           </Link>
         </nav>
